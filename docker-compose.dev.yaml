@@ -1,20 +1,9 @@
 services:
-  client:
-    container_name: debug_dev_client
-    build: ./client
-    image: debug_client
-    ports: 
-      - 8080:8080
-    working_dir: /code
-    volumes:
-      - type: bind
-        source: ./client
-        target: /code
-    command: [ "http-server" ]
   api:
     container_name: debug_dev_api
     ports: 
       - 3000:3000
+      - 4000:4000
     environment: 
       - PGUSER=futureproof
       - PGHOST=db

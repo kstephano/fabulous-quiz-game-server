@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "dev": "nodemon index.js",
+    "dev": "nodemon index.js -L",
     "seedDev": "node db_config/seedDev.js",
     "test": "jest --setupFiles ./tests/integration/config.js --watchAll --detectOpenHandles --runInBand --verbose"
   },
@@ -18,6 +18,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "pg": "^8.3.2"
+    "pg": "^8.3.2",
+    "socket.io": "^4.4.1"
   }
 }
