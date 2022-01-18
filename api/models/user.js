@@ -60,8 +60,8 @@ class User {
     static create(username, score, lobby_id){
         return new Promise (async (resolve, reject) => {
             try {
-                let userData = await db.query(`INSERT INTO users (username, score, game_id) VALUES ($1, $2, $3) RETURNING *;`, [ username, score, lobby_id ]);
-                let newUser = new User(userData);
+                let userData = await db.query(`INSERT INTO users (username, score, lobby_id) VALUES ($1, $2, $3) RETURNING *;`, [ username, score, lobby_id ]);
+                let newUser = new User(userData.rows[0]);
                 resolve (newUser);
             } catch (err) {
                 reject('Error creating User');

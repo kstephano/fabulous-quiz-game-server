@@ -1,3 +1,6 @@
+const Lobby = require("./models/lobby");
+const User = require("./models/user");
+
 const app = require("express")();
 const server = require("http").createServer(app);
 const io = require('socket.io')(server, { cors: { origin: ["http://localhost:8080"] } });
@@ -5,28 +8,38 @@ const io = require('socket.io')(server, { cors: { origin: ["http://localhost:808
 io.on('connection', socket => {
     console.log("socket connected");
     socket.emit("connected", "socket is connected");
-    const players = [];
 
     // on create lobby event
-    socket.on("create-lobby", ({ username, lobbyId }) => {
+    socket.on("create-lobby", async ({ username, category }) => {
+        const lobby = await Lobby.create(category);
+        const lobbyId = lobby.id.toString();
+        console.log(lobby);
         // create the socket room
         socket.join(lobbyId);
-        socket.to(lobbyId).emit(`lobby-created", "Lobby created by ${username}`);
+        socket.to(lobbyId).emit("lobby-created", (lobbyId));
         // add host to list of players
-        players.push(username);
+        const host = await User.create(username, 0, lobbyId);
+        console.log(host);
     });
 
-    socket.on("request-join-lobby", ({ username, lobbyId }) => {
+    socket.on("request-join-lobby", async ({ username, lobbyId }) => {
+        console.log(lobbyId)
+        console.log(io.sockets.adapter.rooms)
+        console.log(typeof `${lobbyId}`)
+        console.log(io.sockets.adapter.rooms.has(`${lobbyId}`));
         if (io.sockets.adapter.rooms.has(lobbyId)) {
+            console.log("test");
+            const players = await User.findByGame(lobbyId);
             // send back entry permission to join room
-            socket.emit("entry-permission", lobbyId);
+            socket.emit("entry-permission", { lobbyId, players });
             // join the socket room
             socket.join(lobbyId);
-            // add host to list of players
-            players.push(username);
+            // add new player to list of players
+            const newPlayer = await User.create(username, 0, lobbyId);
+            console.log(newPlayer);
             const roomCount = io.sockets.adapter.rooms.get(lobbyId).size;
             // broadcast new player joining
-            io.to(lobbyId).emit("new-player-joining", { username, lobbyId, roomCount });
+            io.to(lobbyId).emit("new-player-joining", { newPlayer, roomCount });
         } else {
             socket.emit("lobby-id-invalid")
         }
