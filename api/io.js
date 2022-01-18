@@ -16,7 +16,7 @@ io.on('connection', socket => {
         console.log(lobby);
         // create the socket room
         socket.join(lobbyId);
-        socket.to(lobbyId).emit("lobby-created", (lobbyId));
+        io.to(lobbyId).emit("lobby-created", { lobbyId });
         // add host to list of players
         const host = await User.create(username, 0, lobbyId);
         console.log(host);
@@ -38,7 +38,7 @@ io.on('connection', socket => {
                 // broadcast new player joining
                 io.to(lobbyId).emit("new-player-joining", { newPlayer, roomCount });
             } else {
-                socket.emit("lobby-id-invalid")
+                socket.emit("lobby-id-invalid");
             }
         } catch (err) {
             console.log(`Error joining lobby: ${err}`);
