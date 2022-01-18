@@ -21,10 +21,10 @@ class User {
         })
     }
 
-    static findByGame (game_id) {
+    static findByGame (lobby_id) {
         return new Promise (async (resolve, reject) => {
             try {
-                let usersData = await db.query(`SELECT * FROM games WHERE game_id = $1;`, [ lobby_id ]);
+                let usersData = await db.query(`SELECT * FROM users WHERE lobby_id = $1;`, [ lobby_id ]);
                 const users = usersData.rows.map(u => new User(u))
                 resolve (users)
             } catch (err) {
