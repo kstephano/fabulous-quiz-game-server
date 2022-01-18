@@ -23,25 +23,25 @@ io.on('connection', socket => {
     });
 
     socket.on("request-join-lobby", async ({ username, lobbyId }) => {
-        console.log(lobbyId)
-        console.log(io.sockets.adapter.rooms)
-        console.log(typeof `${lobbyId}`)
-        console.log(io.sockets.adapter.rooms.has(`${lobbyId}`));
-        if (io.sockets.adapter.rooms.has(lobbyId)) {
-            console.log("test");
-            const players = await User.findByGame(lobbyId);
-            // send back entry permission to join room
-            socket.emit("entry-permission", { lobbyId, players });
-            // join the socket room
-            socket.join(lobbyId);
-            // add new player to list of players
-            const newPlayer = await User.create(username, 0, lobbyId);
-            console.log(newPlayer);
-            const roomCount = io.sockets.adapter.rooms.get(lobbyId).size;
-            // broadcast new player joining
-            io.to(lobbyId).emit("new-player-joining", { newPlayer, roomCount });
-        } else {
-            socket.emit("lobby-id-invalid")
+        try {
+            if (io.sockets.adapter.rooms.has(lobbyId)) {
+                console.log("test");
+                const players = await User.findByGame(lobbyId);
+                // send back entry permission to join room
+                socket.emit("entry-permission", { lobbyId, players });
+                // join the socket room
+                socket.join(lobbyId);
+                // add new player to list of players
+                const newPlayer = await User.create(username, 0, lobbyId);
+                console.log(newPlayer);
+                const roomCount = io.sockets.adapter.rooms.get(lobbyId).size;
+                // broadcast new player joining
+                io.to(lobbyId).emit("new-player-joining", { newPlayer, roomCount });
+            } else {
+                socket.emit("lobby-id-invalid")
+            }
+        } catch (err) {
+            console.log(`Error joining lobby: ${err}`);
         }
     })
 
