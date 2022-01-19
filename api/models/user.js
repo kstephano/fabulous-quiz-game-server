@@ -33,8 +33,6 @@ class User {
         })
     }
 
-    
-
     static findByGame (lobby_id) {
         return new Promise (async (resolve, reject) => {
             try {
