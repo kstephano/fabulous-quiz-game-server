@@ -1,5 +1,6 @@
 const Lobby = require("./models/lobby");
 const User = require("./models/user");
+const { getQuestions } = require('./helpers/requests');
 
 const app = require("express")();
 const server = require("http").createServer(app);
@@ -53,12 +54,40 @@ io.on('connection', socket => {
     // host loads game
     socket.on("host-load-game", async ({ lobbyId, currentPlayer }) => {
         try {
+            // send the players to the Game page
+            socket.to(lobbyId.toString()).emit("loading-game");
             const players = await User.findByGame(lobbyId);
-            io.to(lobbyId.toString()).emit("change-view");
-            io.to(lobbyId.toString()).emit("start-game", ({ lobbyData, players, currentPlayer }));
+            const lobby = await Lobby.findById(lobbyId);
+            const questions = await getQuestions(lobby.rounds, lobby.category, lobby.difficulty)
+
+            socket.emit("finished-loading", { lobby, players, currentPlayer, questions })
         } catch (err) {
             console.log(`Error loading game: ${err}`);
         }
+    });
+
+    socket.on("host-start-game", async({ lobby, questions }) => {
+        let count = lobby.time;
+        let questionsIndex = 0;
+        let numOfQuestions = lobby.rounds;
+        const lobbyId = lobby.id.toString();
+
+        // loop through the rounds
+        while (numOfQuestions > 0) {
+            // set a countdown timer for each round
+            const roundCountdown = setInterval(() => {
+                io.to(lobbyId).emit("counter", count);
+                count--;
+                if (count === 0) {
+                    numOfQuestions--;
+                    count = lobby.time;
+                    io.to(lobbyId).emit("new-round");
+                    clearInterval(roundCountdown);
+                }
+            }, 1000);
+        }
+
+        io.to(lobbyId).emit("game-finished");
     });
 
 
@@ -82,24 +111,4 @@ io.on('connection', socket => {
 });
 
 module.exports = io;
-
-//Questions API
-
-//npm install axios
-
-//const axios = require('axios');
-
-// async function getInformation() {
-//   const amount = req.body.amount //any multiple up to 50
-//   const category = req.body.category //must be a number from 1-32 - number corresponds to correct category
-//   const difficulty = req.body.difficulty //must be easy, medium or hard
-//   const type = req.body.type //must be boolean or multiple
-//   try {
-//     const response = await axios.get('https://opentdb.com/api.php?amount={amount}&category={category}&difficulty={difficulty}&type=multiple');
-//     console.log(response);
-//      return response
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
 
