@@ -6,6 +6,7 @@ class Lobby {
         this.category = data.category
         this.rounds = data.rounds
         this.difficulty = data.difficulty
+        this.roundLimit = data.roundlimit
     }
 
     static get all() {
@@ -24,7 +25,7 @@ class Lobby {
         return new Promise (async (resolve, reject) => {
             try {
                 let lobbyData = await db.query("SELECT * FROM lobbies WHERE id = $1;", [ id ]);
-                const lobby = new Lobby(lobbyData.rows[0])
+                const lobby = new Lobby(lobbyData.rows[0]);
                 resolve (lobby)
             } catch (err) {
                 reject('Error retrieving users');
@@ -44,13 +45,10 @@ class Lobby {
         });
     }
 
-
-
-
-    static create(category, rounds, difficulty){
+    static create(category, rounds, difficulty, roundLimit){
         return new Promise (async (resolve, reject) => {
             try {
-                let gameData = await db.query("INSERT INTO lobbies (category, rounds, difficulty) VALUES ($1, $2, $3 ) RETURNING *;", [ category, rounds, difficulty]);
+                let gameData = await db.query("INSERT INTO lobbies (category, rounds, difficulty, roundLimit) VALUES ($1, $2, $3, $4 ) RETURNING *;", [ category, rounds, difficulty, roundLimit ]);
                 let newGame = new Lobby(gameData.rows[0]);
                 resolve (newGame);
             } catch (err) {
