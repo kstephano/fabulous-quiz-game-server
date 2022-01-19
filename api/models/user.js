@@ -21,10 +21,10 @@ class User {
         })
     }
 
-    static findByGame (game_id) {
+    static findByGame (lobby_id) {
         return new Promise (async (resolve, reject) => {
             try {
-                let usersData = await db.query(`SELECT * FROM games WHERE game_id = $1;`, [ lobby_id ]);
+                let usersData = await db.query(`SELECT * FROM games WHERE lobby_id = $1;`, [ lobby_id ]);
                 const users = usersData.rows.map(u => new User(u))
                 resolve (users)
             } catch (err) {
@@ -48,7 +48,7 @@ class User {
     static getScoreList (lobby_id) {
         return new Promise (async (resolve, reject) => {
             try {
-                let usersData = await db.query(`SELECT * FROM users ORDER BY SCORE DESC;`, [ lobby_id ]);
+                let usersData = await db.query(`SELECT * FROM users WHERE lobby_id = $1 ORDER BY SCORE DESC;`, [ lobby_id ]);
                 const user = usersData.rows.map(u => new User(u))
                 resolve (user);
             } catch (err) {
@@ -60,14 +60,16 @@ class User {
     static create(username, score, lobby_id){
         return new Promise (async (resolve, reject) => {
             try {
-                let userData = await db.query(`INSERT INTO users (username, score, game_id) VALUES ($1, $2, $3) RETURNING *;`, [ username, score, lobby_id ]);
-                let newUser = new User(userData);
+                let userData = await db.query("INSERT INTO users (username, score, lobby_id) VALUES ($1, $2, $3) RETURNING *;", [ username, score, lobby_id ]);
+                let newUser = new User(userData.rows[0]);
+                console.log(newUser)
                 resolve (newUser);
             } catch (err) {
-                reject('Error creating User');
+                reject(`Error creating User: ${err}`);
             }
         });
     }
+
 
 }
 

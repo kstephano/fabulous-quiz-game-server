@@ -36,11 +36,11 @@ class Lobby {
     static create(category){
         return new Promise (async (resolve, reject) => {
             try {
-                let gameData = await db.query(`INSERT INTO lobbies (category) VALUES ($1) RETURNING *;`, [ category ]);
+                let gameData = await db.query("INSERT INTO lobbies (category) VALUES ($1) RETURNING *;", [ category ]);
                 let newGame = new Lobby(gameData.rows[0]);
                 resolve (newGame);
             } catch (err) {
-                reject('Error creating Game');
+                reject(`Error creating game: ${err}`);
             }
         });
     }

@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 // 
 router.get('/:category', async (req, res) => {
     try {
-        const games = await Lobby.findByCategory(req.params.id)
+        const games = await Lobby.findByCategory(req.params.category)
         res.json(games)
     } catch(err) {
         res.status(404).json({err})
