@@ -33,5 +33,17 @@ router.post('/', async (req, res) => {
     }
 })
 
+//delete
+router.delete('/:id', async (req, res) => {
+    try {
+        const lobby = await Lobby.findByID(req.params.id)
+        console.log(lobby)
+        await lobby.destroy()
+        res.status(204).end()
+    } catch(err){
+        res.status(500).json({err})
+    }
+})
+
 
 module.exports = router;

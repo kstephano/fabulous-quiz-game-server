@@ -41,4 +41,13 @@ describe("users endpoints", () => {
       expect(res.statusCode).toEqual(200);  
       expect(res.body.id).toEqual(8);
     });
+
+    it("should delete a user", async () => {
+      const res = await request(api).delete("/users/2");
+      const res2 = await request(api).get("/users");
+      expect(res.statusCode).toEqual(204);
+  
+      const userRes = await request(api).get("/users");
+      expect(userRes.body.users.length).toBe(6);
+    });
     });

@@ -21,10 +21,24 @@ class User {
         })
     }
 
+    static findById(id) {
+        return new Promise (async (resolve, reject) => {
+            try {
+                const userData = await db.query("SELECT * FROM users WHERE id = $1;", [id]);
+                const users = new User(userData.rows[0]);
+                resolve(users);
+            } catch (err) {
+                reject("Error retrieving Users")
+            }
+        })
+    }
+
+    
+
     static findByGame (lobby_id) {
         return new Promise (async (resolve, reject) => {
             try {
-                let usersData = await db.query(`SELECT * FROM games WHERE lobby_id = $1;`, [ lobby_id ]);
+                let usersData = await db.query(`SELECT * FROM users WHERE lobby_id = $1;`, [ lobby_id ]);
                 const users = usersData.rows.map(u => new User(u))
                 resolve (users)
             } catch (err) {
@@ -62,13 +76,25 @@ class User {
             try {
                 let userData = await db.query("INSERT INTO users (username, score, lobby_id) VALUES ($1, $2, $3) RETURNING *;", [ username, score, lobby_id ]);
                 let newUser = new User(userData.rows[0]);
-                console.log(newUser)
                 resolve (newUser);
             } catch (err) {
                 reject(`Error creating User: ${err}`);
             }
         });
     }
+
+  destroy(){
+    console.log("OIOI")
+        return new Promise(async (res, rej) => {
+            console.log("Hi")
+            try {
+                await db.query("DELETE FROM users WHERE id = $1;", [this.id]);
+                res('User was deleted')
+            } catch (err) {
+                rej(`Error deleting user: ${err}`)
+            }
+        })
+      }
 
 
 }

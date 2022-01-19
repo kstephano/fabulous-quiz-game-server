@@ -18,6 +18,18 @@ class Lobby {
         })
     }
 
+    static findByID(id){
+        return new Promise (async (resolve, reject) => {
+            try {
+                let lobbyData = await db.query("SELECT * FROM lobbies WHERE id = $1;", [ id ]);
+                const lobby = new Lobby(lobbyData.rows[0])
+                resolve (lobby)
+            } catch (err) {
+                reject('Error retrieving users');
+            }
+        });
+    }
+
     static findByCategory (category) {
         return new Promise (async (resolve, reject) => {
             try {
@@ -44,6 +56,17 @@ class Lobby {
             }
         });
     }
+
+    destroy() {
+        return new Promise(async (res, rej) => {
+            try {
+                await db.query("DELETE FROM lobbies WHERE id = $1;", [this.id]);
+                res('Lobby was deleted')
+            } catch (err) {
+                rej(`Error deleting lobby: ${err}`)
+            }
+        })
+      }
 
 }
 

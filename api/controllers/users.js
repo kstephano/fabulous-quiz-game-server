@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
     }
 })
 
+
 router.get('/leaderboard', async (req, res) => {
     try{
         const users = await User.leaderboard
@@ -43,6 +44,20 @@ router.post('/', async (req, res) => {
         res.status(201)
     } catch(err) {
         res.status(404).json({err})
+    }
+})
+
+//Delete User
+router.delete('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+        console.log(user)
+        console.log("Hi")
+        await user.destroy()
+        console.log("Got here")
+        res.status(204).end()
+    } catch(err){
+        res.status(500).json(err)
     }
 })
 

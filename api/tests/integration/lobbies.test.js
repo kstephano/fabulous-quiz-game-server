@@ -36,10 +36,22 @@ describe("Lobbies endpoints", () => {
         category: "Viking Mythology"
       });
       expect(res.statusCode).toEqual(200);
-      
+      const res2 = await request(api).get("/lobbies")
+      expect(res2.body.games.length).toEqual(4);
+    });
+
+    it("should delete a lobby", async () => {
       const res2 = await request(api).get("/lobbies")
       console.log(res2.body)
-      expect(res2.body.games.length).toEqual(4);
+      const res = await request(api).delete("/lobbies/1");
+      console.log(res.body)
+      
+  
+      expect(res.statusCode).toEqual(204);
+  
+      const lobbyRes = await request(api).get("/lobbies");
+      console.log(lobbyRes.body)
+      expect(lobbyRes.body.games.length).toBe(2);
     });
   
     });
