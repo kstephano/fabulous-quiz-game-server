@@ -1,7 +1,6 @@
 const Lobby = require("./models/lobby");
 const User = require("./models/user");
 const { getQuestions } = require('./helpers/requests');
-const { randomNumBetween } = require('./helpers/index');
 
 const app = require("express")();
 const server = require("http").createServer(app);
@@ -64,7 +63,6 @@ io.on('connection', socket => {
             const players = await User.findByGame(lobbyId);
             const lobby = await Lobby.findByID(lobbyId);
             const questions = await getQuestions(lobby.rounds, lobby.category, lobby.difficulty);
-            console.log(questions);
 
             socket.emit("finished-loading", { lobby, players, currentPlayer, questions })
         } catch (err) {
@@ -73,32 +71,42 @@ io.on('connection', socket => {
     });
 
     socket.on("host-start-game", async ({ lobby, questions }) => {
-        let count = lobby.time;
+        console.log(lobby);
         let questionsIndex = 0;
         let numOfQuestions = lobby.rounds;
         const lobbyId = lobby.id.toString();
 
-        // loop through the rounds
-        while (numOfQuestions > 0) {
-            console.log("question: " + numOfQuestions + 1)
-            // set a countdown timer for each round
-            const roundCountdown = setInterval(() => {
-                io.to(lobbyId).emit("counter", count);
-                count--;
-                if (count === 0) {
-                    numOfQuestions--;
-                    count = lobby.time;
-                    io.to(lobbyId).emit("new-round");
-                    clearInterval(roundCountdown);
-                }
-            }, 1000);
-            roundCountdown();
+        // function that returns a promise that runs the round countdown
+        const roundCountDownPromise = () => {
+            return (new Promise((resolve, reject) => {
+                let count = lobby.roundLimit;
+                // countdown timer for each round
+                const roundCountdown = setInterval(() => {
+                    // console.log("question: " + numOfQuestions + " counter: " + count);
+                    io.to(lobbyId).emit("counter", { count });
+                    count--;
+                    if (count === 0) {
+                        io.to(lobbyId).emit("new-round");
+                        clearInterval(roundCountdown);
+                        numOfQuestions--;
+                        resolve(numOfQuestions);
+                    }
+                }, 1000);
+            }));
         }
 
+        // loop to generate the rounds of questions
+        while (numOfQuestions > 0) {
+            let currentQuestion = questions[questionsIndex];
+            let currentRound = lobby.rounds - numOfQuestions + 1;
+            questionsIndex++;
+            io.to(lobbyId).emit("new-round", { currentRound, currentQuestion });
+            numOfQuestions = await roundCountDownPromise();
+        }
+        
         io.to(lobbyId).emit("game-finished");
     });
-
-
+ 
     // player leaves the lobby
     socket.on("leave-lobby", ({ lobbyId, player }) => {
         try {
