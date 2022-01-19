@@ -16,37 +16,56 @@ io.on('connection', socket => {
         console.log(lobby);
         // create the socket room
         socket.join(lobbyId);
-        io.to(lobbyId).emit("lobby-created", { lobbyId });
         // add host to list of players
         const host = await User.create(username, 0, lobbyId);
         console.log(host);
+        io.to(lobbyId).emit("lobby-created", { host });
     });
 
     socket.on("request-join-lobby", async ({ username, lobbyId }) => {
         try {
+            // check is room exists for given lobby id
             if (io.sockets.adapter.rooms.has(lobbyId)) {
-                console.log("test");
-                const players = await User.findByGame(lobbyId);
-                // send back entry permission to join room
-                socket.emit("entry-permission", { lobbyId, players });
-                // join the socket room
-                socket.join(lobbyId);
-                // add new player to list of players
-                const newPlayer = await User.create(username, 0, lobbyId);
-                console.log(newPlayer);
-                const roomCount = io.sockets.adapter.rooms.get(lobbyId).size;
-                // broadcast new player joining
-                io.to(lobbyId).emit("new-player-joining", { newPlayer, roomCount });
+                // check if room is full (10 or more connections)
+                if (io.sockets.adapter.rooms.get(lobbyId).size < 10) {
+                    const existingPlayers = await User.findByGame(lobbyId);
+                    // send back entry permission to join room
+                    socket.emit("entry-permission", { lobbyId, existingPlayers });
+                    // join the socket room
+                    socket.join(lobbyId);
+                    // add new player to list of players
+                    const newPlayer = await User.create(username, 0, lobbyId);
+                    // add new player to local state of each player
+                    io.to(lobbyId).emit("add-new-player", { newPlayer });
+                    // herald the new player to other players
+                    socket.to(lobbyId).emit("herald-new-player", { newPlayer });
+                } else {
+                    socket.emit("lobby-is-full");
+                }
             } else {
                 socket.emit("lobby-id-invalid");
             }
         } catch (err) {
             console.log(`Error joining lobby: ${err}`);
         }
-    })
+    });
+
+    socket.on("leave-lobby", ({ lobbyId }) => {
+        console.log(lobbyId)
+        console.log(`Left lobby ${lobbyId}`);
+        console.log(io.sockets.adapter.rooms.get(lobbyId));
+        try {
+            if (io.sockets.adapter.rooms.get(lobbyId).size === 1) {
+                // TODO: delete lobby from table
+            }
+            socket.leave(lobbyId);
+        } catch (err) {
+            console.log(`Error leaving lobby: ${err}`);
+        }
+    });
 
     // socket gets disconnected
-    socket.on("disconnect", socket => {
+    socket.on("disconnect", () => {
         console.log("socket disconnected");
     });
 });
