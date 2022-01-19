@@ -26,7 +26,7 @@ router.get('/:category', async (req, res) => {
 // Create Game
 router.post('/', async (req, res) => {
     try {
-        const game = await Lobby.create(req.body.category)
+        const game = await Lobby.create(req.body.category, req.body.rounds, req.body.difficulty)
         res.json(game)
     } catch(err) {
         res.status(404).json({err})
