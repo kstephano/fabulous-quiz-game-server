@@ -1,0 +1,28 @@
+{
+  "name": "server-postgresql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "dev": "nodemon index.js -L",
+    "seedDev": "node db_config/seedDev.js",
+    "test": "jest --setupFiles ./tests/integration/config.js --watchAll --detectOpenHandles --runInBand --verbose",
+    "coverage": "jest --coverage --setupFiles ./tests/integration/config.js --watchAll --detectOpenHandles --runInBand --verbose"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^27.4.7",
+    "nodemon": "^2.0.4",
+    "supertest": "^6.2.1"
+  },
+  "dependencies": {
+    "axios": "^0.25.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "pg": "^8.3.2",
+    "socket.io": "^4.4.1"
+  }
+}
