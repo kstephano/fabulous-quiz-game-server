@@ -1,6 +1,7 @@
 const Lobby = require("./models/lobby");
 const User = require("./models/user");
 const { getQuestions } = require('./helpers/requests');
+const { randomNumBetween } = require('./helpers/index');
 
 const app = require("express")();
 const server = require("http").createServer(app);
@@ -11,16 +12,20 @@ io.on('connection', socket => {
     socket.emit("connected", "socket is connected");
 
     // on create lobby event
-    socket.on("create-lobby", async ({ username, category }) => {
-        const lobby = await Lobby.create(category);
-        console.log(lobby);
-        const lobbyId = lobby.id.toString();
-        // create the socket room
-        socket.join(lobbyId);
-        // add host to list of players
-        const host = await User.create(username, 0, lobbyId);
-        console.log(host);
-        io.to(lobbyId).emit("lobby-created", { host });
+    socket.on("create-lobby", async ({ username, numOfQuestions, categoryId, difficulty, roundLimit }) => {
+        try {
+            const lobby = await Lobby.create(categoryId, numOfQuestions, difficulty.toLowerCase(), roundLimit);
+            console.log(lobby);
+            const lobbyId = lobby.id.toString();
+            // create the socket room
+            socket.join(lobbyId);
+            // add host to list of players
+            const host = await User.create(username, 0, lobbyId);
+            console.log(host);
+            io.to(lobbyId).emit("lobby-created", { host });
+        } catch(err) {
+            console.log(`Error creating lobby: ${err}`);
+        }
     });
 
     // on join lobby event
@@ -57,8 +62,9 @@ io.on('connection', socket => {
             // send the players to the Game page
             socket.to(lobbyId.toString()).emit("loading-game");
             const players = await User.findByGame(lobbyId);
-            const lobby = await Lobby.findById(lobbyId);
-            const questions = await getQuestions(lobby.rounds, lobby.category, lobby.difficulty)
+            const lobby = await Lobby.findByID(lobbyId);
+            const questions = await getQuestions(lobby.rounds, lobby.category, lobby.difficulty);
+            console.log(questions);
 
             socket.emit("finished-loading", { lobby, players, currentPlayer, questions })
         } catch (err) {
@@ -66,7 +72,7 @@ io.on('connection', socket => {
         }
     });
 
-    socket.on("host-start-game", async({ lobby, questions }) => {
+    socket.on("host-start-game", async ({ lobby, questions }) => {
         let count = lobby.time;
         let questionsIndex = 0;
         let numOfQuestions = lobby.rounds;
@@ -74,6 +80,7 @@ io.on('connection', socket => {
 
         // loop through the rounds
         while (numOfQuestions > 0) {
+            console.log("question: " + numOfQuestions + 1)
             // set a countdown timer for each round
             const roundCountdown = setInterval(() => {
                 io.to(lobbyId).emit("counter", count);
@@ -85,6 +92,7 @@ io.on('connection', socket => {
                     clearInterval(roundCountdown);
                 }
             }, 1000);
+            roundCountdown();
         }
 
         io.to(lobbyId).emit("game-finished");
