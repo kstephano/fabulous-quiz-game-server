@@ -4,6 +4,8 @@ class Lobby {
     constructor(data){
         this.id = data.id
         this.category = data.category
+        this.rounds = data.rounds
+        this.difficulty = data.difficulty
     }
 
     static get all() {
@@ -16,6 +18,18 @@ class Lobby {
                 reject("Error retrieving Games")
             }
         })
+    }
+
+    static findByID(id){
+        return new Promise (async (resolve, reject) => {
+            try {
+                let lobbyData = await db.query("SELECT * FROM lobbies WHERE id = $1;", [ id ]);
+                const lobby = new Lobby(lobbyData.rows[0])
+                resolve (lobby)
+            } catch (err) {
+                reject('Error retrieving users');
+            }
+        });
     }
 
     static findByCategory (category) {
@@ -33,17 +47,29 @@ class Lobby {
 
 
 
-    static create(category){
+    static create(category, rounds, difficulty){
         return new Promise (async (resolve, reject) => {
             try {
-                let gameData = await db.query(`INSERT INTO lobbies (category) VALUES ($1) RETURNING *;`, [ category ]);
+                let gameData = await db.query("INSERT INTO lobbies (category, rounds, difficulty) VALUES ($1, $2, $3 ) RETURNING *;", [ category, rounds, difficulty]);
                 let newGame = new Lobby(gameData.rows[0]);
                 resolve (newGame);
             } catch (err) {
-                reject('Error creating Game');
+                reject(`Error creating game: ${err}`);
             }
         });
     }
+
+    destroy() {
+        return new Promise(async (res, rej) => {
+            try {
+                
+                await db.query("DELETE FROM lobbies WHERE id = $1;", [this.id]);
+                res('Lobby was deleted')
+            } catch (err) {
+                rej(`Error deleting lobby: ${err}`)
+            }
+        })
+      }
 
 }
 
