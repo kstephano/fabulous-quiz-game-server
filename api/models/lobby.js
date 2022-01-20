@@ -57,18 +57,16 @@ class Lobby {
         });
     }
 
-    destroy() {
+    static destroy(id) {
         return new Promise(async (res, rej) => {
             try {
-                
-                await db.query("DELETE FROM lobbies WHERE id = $1;", [this.id]);
+                await db.query("DELETE FROM lobbies WHERE id = $1;", [id]);
                 res('Lobby was deleted')
             } catch (err) {
                 rej(`Error deleting lobby: ${err}`)
             }
-        })
+        });
       }
-
 }
 
 module.exports = Lobby;
