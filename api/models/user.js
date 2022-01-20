@@ -81,12 +81,22 @@ class User {
         });
     }
 
-  destroy(){
-    console.log("OIOI")
-        return new Promise(async (res, rej) => {
-            console.log("Hi")
+    static update(id, score) {
+        return new Promise (async (resolve, reject) => {
             try {
-                await db.query("DELETE FROM users WHERE id = $1;", [this.id]);
+                let updatedUserData = await db.query('UPDATE users SET score = $2 WHERE id = $1 RETURNING *;', [ id, score ]);
+                let updatedUser = new User(updatedUserData.rows[0]);
+                resolve (updatedUser);
+            } catch (err) {
+                reject('Error updating User');
+            }
+        });
+    }
+
+  static destroy(id){
+        return new Promise(async (res, rej) => {
+            try {
+                await db.query("DELETE FROM users WHERE id = $1;", [id]);
                 res('User was deleted')
             } catch (err) {
                 rej(`Error deleting user: ${err}`)
