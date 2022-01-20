@@ -1,6 +1,7 @@
 const Lobby = require("./models/lobby");
 const User = require("./models/user");
 const { getQuestions } = require('./helpers/requests');
+const { isAllPlayersLoaded, disconnectedPlayerIds } = require('./helpers/index');
 
 const app = require("express")();
 const server = require("http").createServer(app);
@@ -19,7 +20,7 @@ io.on('connection', socket => {
             // create the socket room
             socket.join(lobbyId);
             // add host to list of players
-            const host = await User.create(username, 0, lobbyId);
+            const host = await User.create(username, null, lobbyId);
             console.log(host);
             io.to(lobbyId).emit("lobby-created", { host });
         } catch(err) {
@@ -35,7 +36,7 @@ io.on('connection', socket => {
                 // check if room is full (10 or more connections)
                 if (io.sockets.adapter.rooms.get(lobbyId).size < 10) {
                     const existingPlayers = await User.findByGame(lobbyId);
-                    const newPlayer = await User.create(username, 0, lobbyId);
+                    const newPlayer = await User.create(username, null, lobbyId);
                     // send back entry permission to join room
                     socket.emit("entry-permission", { lobbyId, existingPlayers, newPlayer });
                     // join the socket room
@@ -106,6 +107,52 @@ io.on('connection', socket => {
         
         io.to(lobbyId).emit("game-finished");
     });
+
+    socket.on("upload-score", async ({ player, score, rounds }) => {
+        try {
+            const lobbyId = player.lobby_id.toString();
+            let isUploaded = false;
+            console.log(player);
+            const scorePercentage = Math.floor(score / rounds * 100);
+            const updatedUser = await User.update(player.id, scorePercentage);
+            console.log(updatedUser);
+
+            const playersInLobby = await User.findByGame(lobbyId);
+            console.log(playersInLobby);
+            
+            // give all players 1 sec to load scores
+            // setTimeout(() => {
+            //     if (isAllPlayersLoaded(playersInLobby)) {
+            //         isUploaded = true;
+            //         io.to(lobbyId).emit("upload-done");
+            //     }
+            // }, 1000);
+            const loadPromise = new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (isAllPlayersLoaded(playersInLobby)) {
+                        io.to(lobbyId).emit("upload-done");
+                        resolve(true);
+                    }
+                }, 1000);
+            });
+            isUploaded = await loadPromise;
+            console.log(isUploaded);
+
+            if (!isUploaded) {
+                // if not all have loaded wait 5 seconds before purging the player
+                // with null score
+                const ids = disconnectedPlayerIds(playersInLobby);
+                // loop through ids of disconnected players and delete from db
+                for (let i = 0; i < ids.length; i++) {
+                    User.destroy(ids[0]);
+                    console.log("user deleted");
+                }
+                io.to(lobbyId).emit("upload-done");
+            }
+        } catch (err) {
+            console.log(`Error uploading score: ${err}`);
+        }
+    })
  
     // player leaves the lobby
     socket.on("leave-lobby", ({ lobbyId, player }) => {
