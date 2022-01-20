@@ -48,7 +48,7 @@ class User {
     static get leaderboard () {
         return new Promise (async (resolve, reject) => {
             try {
-                let usersData = await db.query(`SELECT * FROM users ORDER BY SCORE DESC LIMIT 10;`);
+                let usersData = await db.query(`SELECT * FROM users ORDER BY SCORE DESC LIMIT 100;`);
                 const users = usersData.rows.map(u => new User(u))
                 resolve (users);
             } catch (err) {
