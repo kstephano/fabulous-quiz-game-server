@@ -111,27 +111,20 @@ io.on('connection', socket => {
     socket.on("upload-score", async ({ player, score, rounds }) => {
         try {
             const lobbyId = player.lobby_id.toString();
-            let isUploaded = false;
-            console.log(player);
             const scorePercentage = Math.floor(score / rounds * 100);
-            const updatedUser = await User.update(player.id, scorePercentage);
-            console.log(updatedUser);
-
+            let isUploaded = false;
+        
+            await User.update(player.id, scorePercentage);
             const playersInLobby = await User.findByGame(lobbyId);
             console.log(playersInLobby);
             
-            // give all players 1 sec to load scores
-            // setTimeout(() => {
-            //     if (isAllPlayersLoaded(playersInLobby)) {
-            //         isUploaded = true;
-            //         io.to(lobbyId).emit("upload-done");
-            //     }
-            // }, 1000);
             const loadPromise = new Promise((resolve, reject) => {
                 setTimeout(() => {
                     if (isAllPlayersLoaded(playersInLobby)) {
                         io.to(lobbyId).emit("upload-done");
                         resolve(true);
+                    } else {
+                        resolve(false);
                     }
                 }, 1000);
             });
