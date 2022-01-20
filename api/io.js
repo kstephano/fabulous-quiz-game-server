@@ -153,6 +153,7 @@ io.on('connection', socket => {
         try {
             console.log(lobbyId.toString());
             console.log(player);
+            await User.destroy(player.id);
             // delete lobby if last person leaves
             if (io.sockets.adapter.rooms.get(lobbyId.toString()).size === 1) {
                 const deleteMsg = await Lobby.destroy(lobbyId);
