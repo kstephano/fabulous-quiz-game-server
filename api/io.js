@@ -57,7 +57,7 @@ io.on('connection', socket => {
     });
 
     // host loads game
-    socket.on("host-load-game", async ({ lobbyId, currentPlayer }) => {
+    socket.on("host-load-game", async ({ lobbyId }) => {
         try {
             // send the players to the Game page
             socket.to(lobbyId.toString()).emit("loading-game");
@@ -65,7 +65,7 @@ io.on('connection', socket => {
             const lobby = await Lobby.findByID(lobbyId);
             const questions = await getQuestions(lobby.rounds, lobby.category, lobby.difficulty);
 
-            socket.emit("finished-loading", { lobby, players, currentPlayer, questions })
+            io.to(lobbyId.toString()).emit("host-finished-loading", { lobby, players, questions });
         } catch (err) {
             console.log(`Error loading game: ${err}`);
         }
@@ -110,6 +110,7 @@ io.on('connection', socket => {
 
     socket.on("upload-score", async ({ player, score, rounds }) => {
         try {
+            console.log(player);
             const lobbyId = player.lobby_id.toString();
             const scorePercentage = Math.floor(score / rounds * 100);
             let isUploaded = false;
