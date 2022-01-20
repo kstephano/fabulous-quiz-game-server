@@ -47,6 +47,16 @@ router.post('/', async (req, res) => {
     }
 })
 
+//Update User
+router.patch('/:id', async (req, res) => {
+    try {
+        const updatedUser = await User.update(req.body.id, req.body.score)
+        res.json(updatedUser)
+    } catch(err) {
+        res.status(500).json({err})
+    }
+})
+
 //Delete User
 router.delete('/:id', async (req, res) => {
     try {
