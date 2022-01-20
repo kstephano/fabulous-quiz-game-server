@@ -148,13 +148,24 @@ io.on('connection', socket => {
     })
  
     // player leaves the lobby
-    socket.on("leave-lobby", ({ lobbyId, player }) => {
+    socket.on("leave-lobby", async ({ lobbyId, player, isHost }) => {
         try {
-            if (io.sockets.adapter.rooms.get(lobbyId).size === 1) {
-                // TODO: delete lobby from table
+            console.log(lobbyId.toString());
+            console.log(player);
+            // delete lobby if last person leaves
+            if (io.sockets.adapter.rooms.get(lobbyId.toString()).size === 1) {
+                const deleteMsg = await Lobby.destroy(lobbyId);
+                console.log(deleteMsg);
             }
-            socket.to(lobbyId).emit("player-left", { player });
-            socket.leave(lobbyId);
+            // select a new host if host leaves
+            if (isHost) {
+                const players = await User.findByGame(lobbyId.toString());
+                const newHost = players.find(p => p.id !== player.id);
+                console.log(newHost);
+                io.to(lobbyId.toString()).emit("host-left", { newHost });
+            }
+            io.to(lobbyId.toString()).emit("player-left", { player });
+            socket.leave(lobbyId.toString());
         } catch (err) {
             console.log(`Error leaving lobby: ${err}`);
         }
