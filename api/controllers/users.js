@@ -13,6 +13,15 @@ router.get('/', async (req, res) => {
     }
 })
 
+router.get('/at/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        res.json({ user });
+        res.status(200);
+    } catch (err) {
+        res.status(500).json({ err });
+    }
+});
 
 router.get('/leaderboard', async (req, res) => {
     try{
