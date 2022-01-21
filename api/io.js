@@ -84,7 +84,6 @@ io.on('connection', socket => {
                 let count = lobby.roundLimit;
                 // countdown timer for each round
                 const roundCountdown = setInterval(() => {
-                    // console.log("question: " + numOfQuestions + " counter: " + count);
                     io.to(lobbyId).emit("counter", { count });
                     count--;
                     if (count === 0) {
