@@ -111,7 +111,6 @@ io.on('connection', socket => {
 
     socket.on("upload-score", async ({ player, score, rounds }) => {
         try {
-            console.log(player);
             const lobbyId = player.lobby_id.toString();
             const scorePercentage = Math.floor(score / rounds * 100);
         
@@ -122,14 +121,13 @@ io.on('connection', socket => {
                     const playersInLobby = await User.findByGame(lobbyId);
                     if (isAllPlayersLoaded(playersInLobby)) {
                         io.to(lobbyId).emit("upload-done");
-                        resolve({ playplayersInLobbyers: playersInLobby, isDisconnected: false });
+                        resolve({ playersInLobby: playersInLobby, isDisconnected: false });
                     } else {
                         resolve({ playersInLobby: playersInLobby, isDisconnected: true });
                     }
                 }, 1000);
             });
             const { playersInLobby, isDisconnected } = await loadPromise;
-            console.log(isDisconnected);
 
             if (isDisconnected) {
                 // if not all have loaded purge the players with null score
@@ -137,7 +135,6 @@ io.on('connection', socket => {
                 // loop through ids of disconnected players and delete from db
                 for (let i = 0; i < ids.length; i++) {
                     User.destroy(ids[0]);
-                    console.log("user deleted");
                 }
                 io.to(lobbyId).emit("upload-done");
             }
