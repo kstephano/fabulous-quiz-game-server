@@ -60,6 +60,7 @@ io.on('connection', socket => {
     socket.on("host-load-game", async ({ lobbyId }) => {
         try {
             // send the players to the Game page
+            console.log(lobbyId);
             socket.to(lobbyId.toString()).emit("loading-game");
             const players = await User.findByGame(lobbyId);
             const lobby = await Lobby.findByID(lobbyId);
@@ -113,28 +114,25 @@ io.on('connection', socket => {
             console.log(player);
             const lobbyId = player.lobby_id.toString();
             const scorePercentage = Math.floor(score / rounds * 100);
-            let isUploaded = false;
         
             await User.update(player.id, scorePercentage);
-            const playersInLobby = await User.findByGame(lobbyId);
-            console.log(playersInLobby);
             
-            const loadPromise = new Promise((resolve, reject) => {
-                setTimeout(() => {
+            const loadPromise = new Promise(async (resolve, reject) => {
+                setTimeout(async () => {
+                    const playersInLobby = await User.findByGame(lobbyId);
                     if (isAllPlayersLoaded(playersInLobby)) {
                         io.to(lobbyId).emit("upload-done");
-                        resolve(true);
+                        resolve({ playplayersInLobbyers: playersInLobby, isDisconnected: false });
                     } else {
-                        resolve(false);
+                        resolve({ playersInLobby: playersInLobby, isDisconnected: true });
                     }
                 }, 1000);
             });
-            isUploaded = await loadPromise;
-            console.log(isUploaded);
+            const { playersInLobby, isDisconnected } = await loadPromise;
+            console.log(isDisconnected);
 
-            if (!isUploaded) {
-                // if not all have loaded wait 5 seconds before purging the player
-                // with null score
+            if (isDisconnected) {
+                // if not all have loaded purge the players with null score
                 const ids = disconnectedPlayerIds(playersInLobby);
                 // loop through ids of disconnected players and delete from db
                 for (let i = 0; i < ids.length; i++) {
@@ -153,20 +151,25 @@ io.on('connection', socket => {
         try {
             console.log(lobbyId.toString());
             console.log(player);
-            await User.destroy(player.id);
             // delete lobby if last person leaves
+            console.log(io.sockets.adapter.rooms.get(lobbyId.toString()).size);
             if (io.sockets.adapter.rooms.get(lobbyId.toString()).size === 1) {
                 const deleteMsg = await Lobby.destroy(lobbyId);
                 console.log(deleteMsg);
             }
-            // select a new host if host leaves
-            if (isHost) {
-                const players = await User.findByGame(lobbyId.toString());
-                const newHost = players.find(p => p.id !== player.id);
-                console.log(newHost);
-                io.to(lobbyId.toString()).emit("host-left", { newHost });
-            }
+            await User.destroy(player.id);
             io.to(lobbyId.toString()).emit("player-left", { player });
+
+            if (isHost) {
+                try {
+                    const players = await User.findByGame(lobbyId.toString());
+                    const newHost = players.find(p => p.id !== player.id);
+                    console.log(newHost);
+                    io.to(lobbyId.toString()).emit("host-left", { newHost });
+                } catch (err) {
+                    console.log(err);
+                }
+            } 
             socket.leave(lobbyId.toString());
         } catch (err) {
             console.log(`Error leaving lobby: ${err}`);
