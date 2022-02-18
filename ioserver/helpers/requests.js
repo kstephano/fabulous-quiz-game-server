@@ -15,7 +15,6 @@ async function getQuestions(numOfQuestions, categoryId, difficulty) {
       `https://opentdb.com/api.php?amount=${numOfQuestions}&category=${categoryId}&difficulty=${difficultyLowerCase}&type=multiple`
     );
     const data = response.data.results;
-    console.log(data);
     return data;
   } catch (error) {
     console.error(`(fetch) Error getting questions: ${error}`);
@@ -56,10 +55,10 @@ async function deleteLobby(lobbyId) {
 
 async function createUser(username, score = null, lobby_id) {
   try {
-    const response = await axios.post(`${url}/users/`, {
-      username: username,
-      score: score,
-      lobby_id: lobby_id,
+    const response = await axios.post(`${url}/users`, {
+      "username": username,
+      "score": score,
+      "lobby_id": lobby_id,
     });
     return response.data;
   } catch (error) {
@@ -69,18 +68,18 @@ async function createUser(username, score = null, lobby_id) {
 
 async function findUsersByGame(lobby_id) {
   try {
-    const response = await axios.post(`${url}/users/lobby/${lobby_id}`);
+    const response = await axios.get(`${url}/users/lobby/${lobby_id}`);
     return response.data;
   } catch (error) {
-    console.error(`(fetch) Error creating user: ${error}`);
+    console.error(`(fetch) Error finding users by game: ${error}`);
   }
 }
 
 async function updateUser(id, score) {
   try {
     const response = await axios.patch(`${url}/users/`, {
-      id: id,
-      score: score,
+      "id": id,
+      "score": score,
     });
     return response.data;
   } catch (error) {

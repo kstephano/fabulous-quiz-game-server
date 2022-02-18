@@ -40,13 +40,13 @@ io.on("connection", (socket) => {
           difficulty.toLowerCase(),
           roundLimit
         );
-        console.log(lobby);
+        console.log("Lobby", lobby);
         const lobbyId = lobby.id.toString();
         // create the socket room
         socket.join(lobbyId);
         // add host to list of players
         const host = await createUser(username, null, lobbyId);
-        console.log(host);
+        console.log("Host", host);
         io.to(lobbyId).emit("lobby-created", { host });
       } catch (err) {
         console.log(`Error creating lobby: ${err}`);
@@ -90,7 +90,7 @@ io.on("connection", (socket) => {
   socket.on("host-load-game", async ({ lobbyId }) => {
     try {
       // send the players to the Game page
-      console.log(lobbyId);
+      console.log("lobby_id:", lobbyId);
       socket.to(lobbyId.toString()).emit("loading-game");
       const players = await findUsersByGame(lobbyId);
       const lobby = await findLobbyById(lobbyId);
