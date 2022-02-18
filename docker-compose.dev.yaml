@@ -1,11 +1,10 @@
-version: '3'
+version: "3"
 services:
   api:
     container_name: quizgame_api
     ports:
       - 3000:3000
-      - 4000:4000
-    environment: 
+    environment:
       - PORT=3000
       - PGUSER=squad
       - PGHOST=db
@@ -13,16 +12,24 @@ services:
       - PGDATABASE=quizgame_dev
       - PGPORT=5432
       - NODE_ENV=dev
-    depends_on: 
+    depends_on:
       - db
     command: bash -c "npm install && npm run seedDev && npm run dev"
+  ioserver:
+    container_name: quizgame_io_api
+    ports:
+      - 4000:4000
+    environment:
+      - port=4000
+      - NODE_ENV=dev
+    command: bash -c "npm install && npm run dev"
   db:
     container_name: quizgame_db
     expose:
       - "5432"
     volumes:
       - "dbdata:/var/lib/postgresql/data"
-    environment: 
+    environment:
       - POSTGRES_DB=quizgame_dev
       - POSTGRES_USER=squad
       - POSTGRES_PASSWORD=password

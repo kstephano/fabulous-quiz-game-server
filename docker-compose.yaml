@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   api:
     image: node:12.18.4
@@ -7,10 +7,16 @@ services:
       - type: bind
         source: ./api
         target: /code
-
+  ioserver:
+    image: node:latest
+    working_dir: /iocode
+    volumes:
+      - type: bind
+        source: ./ioserver
+        target: /iocode
   db:
     image: postgres:12.4
-    environment: 
+    environment:
       - POSTGRES_USER=squad
     volumes:
       - "./db/migrations:/docker-entrypoint-initdb.d/:ro"

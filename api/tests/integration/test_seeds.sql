@@ -11,8 +11,8 @@ VALUES
     ('Emily', 0.9, 3);
 
 
-INSERT INTO lobbies (category)
+INSERT INTO lobbies (category, rounds, difficulty, roundLimit)
 VALUES
-    ('Entertainment: Movies'),
-    ('General Knowledge'),
-    ('Sports');
+    (11, 2, 'Easy',50),
+    (9, 10, 'Medium',50);
+    (10, 10, 'Hard',50);
